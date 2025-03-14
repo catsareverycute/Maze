@@ -8,9 +8,8 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         Maze test = new Maze(getMaze("src/maze"));
-
-
-
+        test.testMaze();
+        test.mazeSolver();
     }
     public static String[][] getMaze(String fileName) {
         File f = new File(fileName);
