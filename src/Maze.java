@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class Maze {
     private int currentPositionX = 0;
@@ -9,6 +10,7 @@ public class Maze {
     private int previousCoordinateY;
     private String[][] maze;
     ArrayList<String> coordinates = new ArrayList<String>();
+    private HashSet<String> visited = new HashSet<String>();
 
     public Maze(String[][] maze){
         endPositionX = maze[0].length-1;
@@ -26,121 +28,155 @@ public class Maze {
     }
 
     public void addCoordinate(int x, int y){
-        String coordinate = "(" + currentPositionX + "," + currentPositionY + ")";
+        String coordinate = "(" + y + "," + x + ")";
         coordinates.add(coordinate);
     }
 
 
     public boolean checkPast(){
-        if (currentPositionX == previousCoordinateX && currentPositionY == previousCoordinateY){
-            return false;
-        }
-        return true;
+        String currentCoordinate = "(" + currentPositionY + "," + currentPositionX + ")";
+        return !visited.contains(currentCoordinate);
     }
 
-    public boolean goUp(){
+    public boolean isVisited(int x, int y) {
+        String coordinate = "(" + y + "," + x + ")";
+        return visited.contains(coordinate);
+    }
+
+    public void markVisited(int x, int y) {
+        String coordinate = "(" + y + "," + x + ")";
+        visited.add(coordinate);
+    }
+
+    public boolean goDown(){
         try {
-            while (maze[currentPositionY + 1][currentPositionX].equals(".")) {
+            if (maze[currentPositionY + 1][currentPositionX].equals(".") && !isVisited(currentPositionX, currentPositionY + 1)) {
                 currentPositionY = currentPositionY + 1;
-                if (!checkPast()) {
-                    currentPositionY = currentPositionY - 1;
-                    return true;
-                }
                 addCoordinate(currentPositionX, currentPositionY);
-                previousCoordinateX = currentPositionX;
-                previousCoordinateY = currentPositionY - 1;
-                break;
+                markVisited(currentPositionX, currentPositionY);
+                return true;
             }
         }
         catch (Exception e){
-            return true;
+            return false;
         }
-         return false;
+        return false;
     }
 
-    public boolean goDown() {
-        try{
-         while (maze[currentPositionY - 1][currentPositionX].equals(".")) {
-             currentPositionY = currentPositionY - 1;
-             if (!checkPast()) {
-                 currentPositionY = currentPositionY + 1;
-                 return true;
-             }
-             addCoordinate(currentPositionX, currentPositionY);
-                 previousCoordinateX = currentPositionX;
-                 previousCoordinateY = currentPositionY + 1;
-                 break;
-         }}
-        catch (Exception e) {
-            return true;
+    public boolean goUp() {
+        try {
+            if (maze[currentPositionY - 1][currentPositionX].equals(".") && !isVisited(currentPositionX, currentPositionY - 1)) {
+                currentPositionY = currentPositionY - 1;
+                addCoordinate(currentPositionX, currentPositionY);
+                markVisited(currentPositionX, currentPositionY);
+                return true;
+            }
         }
-         return false;
+        catch (Exception e) {
+            return false;
+        }
+        return false;
     }
 
     public boolean goLeft(){
         try {
-            while (maze[currentPositionY][currentPositionX - 1].equals(".")) {
+            if (maze[currentPositionY][currentPositionX - 1].equals(".") && !isVisited(currentPositionX - 1, currentPositionY)) {
                 currentPositionX = currentPositionX - 1;
-            if (!checkPast()) {
-                currentPositionX = currentPositionX + 1;
+                addCoordinate(currentPositionX, currentPositionY);
+                markVisited(currentPositionX, currentPositionY);
                 return true;
             }
-            addCoordinate(currentPositionX, currentPositionY);
-                previousCoordinateX = currentPositionX + 1;
-                previousCoordinateY = currentPositionY;
-        }}
+        }
         catch (Exception e){
-            return true;
+            return false;
         }
         return false;
     }
 
     public boolean goRight(){
-        try {
-        while (maze[currentPositionY][currentPositionX+1].equals(".")) {
-            currentPositionX = currentPositionX + 1;
-            if (!checkPast()) {
-                currentPositionX = currentPositionX - 1;
-                return true;
-            }
-            addCoordinate(currentPositionX, currentPositionY);
-                previousCoordinateX = currentPositionX - 1;
-                previousCoordinateY = currentPositionY;
-                break;
-        }}
-        catch (Exception e){
-            return true;
+    try {
+        if (maze[currentPositionY][currentPositionX + 1].equals(".") && !isVisited(currentPositionX + 1, currentPositionY)) {
+            currentPositionX = currentPositionX + 1; 
+            addCoordinate(currentPositionX, currentPositionY); 
+            markVisited(currentPositionX, currentPositionY); 
+            return true; 
         }
+    }
+    catch (Exception e) {
         return false;
+    }
+    return false; 
+}
+
+    public boolean checkFork() {
+        int test = 0;
+
+        if (currentPositionY < maze.length - 1 && maze[currentPositionY + 1][currentPositionX].equals(".")) {
+            test++;
+        }
+        if (currentPositionY > 0 && maze[currentPositionY - 1][currentPositionX].equals(".")) {
+            test++;
+        }
+        if (currentPositionX < maze[0].length - 1 && maze[currentPositionY][currentPositionX + 1].equals(".")) {
+            test++;
+        }
+        if (currentPositionX > 0 && maze[currentPositionY][currentPositionX - 1].equals(".")) {
+            test++;
+        }
+
+        return test > 1;
+    }
+
+    public void goBack(){
+        coordinates.remove(coordinates.size() - 1); 
+        String[] last = coordinates.get(coordinates.size() - 1).replace("(", "").replace(")", "").split(",");
+        currentPositionX = Integer.parseInt(last[1]);
+        currentPositionY = Integer.parseInt(last[0]);
     }
 
     public void mazeSolver(){
-        System.out.println("test");
+        addCoordinate(0, 0);
+        markVisited(currentPositionX, currentPositionY); 
+
         while (!checkEnd()){
-            if (!goRight()){
-                goRight();
+            if (!checkFork()){
+                if (!handleFork()){
+                    if (coordinates.size() > 1) {
+                        goBack();
+                    }
+                }
+            } else {
+                if (goRight()) {
+                    
+                } 
+                else if (goDown()) {
+                    
+                }
+                else if (goUp()) {
+                    
+                }
+                else if (goLeft()) {
+                    
+                }
+                else {
+                    if (coordinates.size() > 1) {
+                        goBack();
+                    }
+                }
             }
-            if (!goUp()){
-                goUp();
-            }
-            if (!goDown()){
-                goDown();
-            }
-            if (!goLeft()){
-                goLeft();
-            }
-            System.out.println("(" + currentPositionX + "," + currentPositionY + ")");
-            System.out.println(coordinates);
             if (checkEnd()){
                 break;
             }
         }
         System.out.println(coordinates);
-        System.exit(0);
     }
 
     public boolean checkEnd(){
         return (currentPositionX == endPositionX) && (currentPositionY == endPositionY);
+    }
+
+    public boolean handleFork() {
+        return goRight() || goDown() || goUp() || goLeft();
     }
 
     // create coordinate
